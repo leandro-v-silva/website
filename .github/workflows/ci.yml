@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Job 1 — fast static + behavioural validation of the dashboard.
+  # Runs on every push/PR: proves the committed report renders and that
+  # slicers recalculate measures to known-correct values.
+  # ---------------------------------------------------------------------
+  report:
+    name: Validate dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install test harness (jsdom)
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax-check dashboard sources
+        run: |
+          node --check report/js/dashboard.js
+          node --check report/data.js
+          node --check tests/render-test.js
+          node --check tests/interaction-test.js
+
+      - name: Serve the report locally
+        run: python3 -m http.server 8000 --directory report &
+        # give the server a moment before the browser tests hit it
+
+      - name: Headless render test (jsdom)
+        run: node tests/render-test.js
+
+      - name: Slicer + i18n interaction tests (values pinned to DuckDB truth)
+        run: node tests/interaction-test.js
+
+  # ---------------------------------------------------------------------
+  # Job 2 — full ETL rebuild. Downloads the dataset, reruns extract →
+  # transform → export and fails if the committed data.js is not
+  # reproducible from the SQL. Proves the published dashboard matches the
+  # pipeline output exactly.
+  # ---------------------------------------------------------------------
+  etl:
+    name: Rebuild ETL & verify reproducibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache the raw dataset between runs
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: uci-online-retail-ii
+
+      - name: Install pinned dependencies
+        run: make setup
+
+      - name: Download dataset + raw load (skips download if cache hit)
+        run: .venv/bin/python etl/extract.py
+
+      - name: Keep a copy of the committed data.js for comparison
+        run: cp report/data.js /tmp/data-committed.js
+
+      - name: Rebuild star schema + marts
+        run: .venv/bin/python etl/transform.py
+
+      - name: Regenerate dashboard data
+        run: .venv/bin/python etl/export.py
+
+      - name: Verify committed data.js is reproducible
+        run: node scripts/verify-data.js /tmp/data-committed.js report/data.js
+
+      - name: Sanity-check headline KPIs against known dataset totals
+        run: |
+          .venv/bin/python - <<'EOF'
+          import duckdb
+          c = duckdb.connect("analytics.duckdb", read_only=True)
+          rev, orders, cust = c.execute("""
+              SELECT round(sum(order_value),2), count(*), count(DISTINCT customer_id)
+              FROM mart_orders
+          """).fetchone()
+          assert abs(rev - 17374804.25) < 0.01, rev
+          assert orders == 36969, orders
+          assert cust == 5878, cust
+          print(f"KPI sanity OK: £{rev:,.2f} · {orders:,} orders · {cust:,} customers")
+          EOF

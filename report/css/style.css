@@ -1,0 +1,335 @@
+:root {
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --ink: #1e293b;
+  --ink-soft: #64748b;
+  --line: #e2e8f0;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+  --teal: #0d9488;
+  --amber: #f59e0b;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .05);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+/* ---------- header ---------- */
+.site-header {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 36px 24px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.site-header h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -.02em;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.period-badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- KPI cards ---------- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 20px 0 8px;
+}
+
+.kpi {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px 14px;
+  border-top: 3px solid var(--accent);
+}
+
+.kpi .kpi-label {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-weight: 600;
+}
+
+.kpi .kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi .kpi-sub {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+/* ---------- chart cards ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 22px 14px;
+}
+
+.card-wide { grid-column: span 1; }
+
+@media (min-width: 1080px) {
+  .grid { grid-template-columns: 3fr 2fr; }
+}
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 16.5px;
+  letter-spacing: -.01em;
+}
+
+.card-note {
+  margin: 2px 0 6px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.chart { width: 100%; }
+.chart-tall { min-height: 420px; }
+
+/* ---------- toggle ---------- */
+.toggle {
+  display: inline-flex;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 3px;
+  margin: 4px 0 8px;
+}
+
+.toggle-btn {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: 600 12.5px inherit;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---------- d3 shared ---------- */
+.axis text { fill: var(--ink-soft); font-size: 11.5px; }
+.axis line, .axis path { stroke: var(--line); }
+.grid-line line { stroke: var(--line); stroke-dasharray: 3 3; }
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .25);
+  opacity: 0;
+  transition: opacity .12s ease;
+  max-width: 260px;
+  z-index: 10;
+}
+
+.tooltip .tt-title { font-weight: 700; margin-bottom: 2px; }
+.tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+.tooltip .tt-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- footer ---------- */
+.site-footer {
+  margin-top: 28px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.site-footer code {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+/* ---------- header actions (language + badge) ---------- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lang-toggle {
+  display: inline-flex;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow);
+}
+
+.lang-btn {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font: 700 12.5px inherit;
+  padding: 5px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  letter-spacing: .04em;
+}
+
+.lang-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---------- slicer bar (Power BI style) ---------- */
+.slicer-bar {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 18px;
+  margin-top: 18px;
+}
+
+.slicer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slicer-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--ink-soft);
+}
+
+.chip-group {
+  display: inline-flex;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.chip {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: 600 12.5px inherit;
+  padding: 4px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.slicer-select {
+  font: 600 13px inherit;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 6px 10px;
+  background: #fff;
+  min-width: 190px;
+  cursor: pointer;
+}
+
+.slicer-select:focus-visible,
+.chip:focus-visible,
+.lang-btn:focus-visible,
+.toggle-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.slicer-hint {
+  margin-left: auto;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-style: italic;
+}
+
+@media (max-width: 860px) {
+  .slicer-hint { display: none; }
+}
+
+/* ---------- empty state ---------- */
+.nodata {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
+
+.app-version {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
