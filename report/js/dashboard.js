@@ -186,6 +186,13 @@
   const monthYear = (d) => t("months")[d.getMonth()] + " " + d.getFullYear();
   const parseD = d3.timeParse("%Y-%m-%d");
   const parseMonth = d3.timeParse("%Y-%m");
+
+  // "REGENCY CAKESTAND 3 TIER" -> "Regency Cakestand 3 Tier"
+  const TITLE_MINOR = new Set(["a", "an", "the", "and", "but", "or", "nor", "at", "by", "for", "in", "of", "on", "to", "with", "set"]);
+  const titleCase = (s) =>
+    (s || "").toLowerCase().split(/\s+/).map((w, i) =>
+      w && (i === 0 || !TITLE_MINOR.has(w)) ? w[0].toUpperCase() + w.slice(1) : w
+    ).join(" ");
   const addMonthsLabel = (label, p) => {
     const y = +label.slice(0, 4);
     const m = +label.slice(5, 7) - 1 + p;
@@ -527,7 +534,11 @@
     svg.append("g").attr("class", "grid-line")
       .call(d3.axisLeft(y).ticks(5).tickSize(-innerW).tickFormat("")).select(".domain").remove();
     svg.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`)
-      .call(d3.axisBottom(x).tickValues(x.domain().filter((_, i) => i % 3 === 0)));
+      .call(
+        d3.axisBottom(x)
+          .tickValues(x.domain().filter((_, i) => i % 3 === 0))
+          .tickFormat((lbl) => timeLoc.format("%b %y")(parseMonth(lbl)))
+      );
     svg.append("g").attr("class", "axis").call(d3.axisLeft(y).ticks(5).tickFormat(val));
 
     svg.selectAll("g.layer").data(series).join("g").attr("class", "layer")
@@ -593,14 +604,14 @@
 
     row.append("text").attr("x", -10).attr("y", cellH / 2 + 4)
       .attr("text-anchor", "end").attr("fill", INK_SOFT).attr("font-size", 11.5)
-      .text((d) => d.cohort);
+      .text((d) => monthYear(parseMonth(d.cohort)));
 
     row.selectAll("rect").data((d) => d.cells).join("rect")
       .attr("x", (d) => d.period * cellW + 1).attr("y", 1)
       .attr("width", cellW - 2).attr("height", cellH - 2).attr("rx", 3)
       .attr("fill", (d) => color(d.pct))
       .on("mousemove", (event, d) => {
-        showTooltip(event, t("tt.cohortTitle", { c: d.cohort, p: d.period }), [
+        showTooltip(event, t("tt.cohortTitle", { c: monthYear(parseMonth(d.cohort)), p: d.period }), [
           [t("tt.active"), t("tt.activeOf", { a: fmt.int(d.active), b: fmt.int(d.size) })],
           [t("tt.retention"), fmt.pct(d.pct)],
         ]);
@@ -692,7 +703,7 @@
     svg.append("g").attr("class", "axis")
       .call(d3.axisLeft(y).tickFormat((code) => {
         const d = data.find((p) => p.stock_code === code);
-        const label = (d.description || "").toLowerCase();
+        const label = titleCase(d.description || "");
         return label.length > maxLen ? label.slice(0, maxLen - 1) + "…" : label;
       }));
 
@@ -701,7 +712,7 @@
       .attr("width", (d) => x(d.total_revenue)).attr("height", y.bandwidth())
       .attr("rx", 3).attr("fill", TEAL).attr("opacity", 0.85)
       .on("mousemove", (event, d) => {
-        showTooltip(event, d.description, [
+        showTooltip(event, titleCase(d.description), [
           [t("tt.stockCode"), d.stock_code],
           [t("tt.category"), d.category],
           [t("tt.revenue"), fmt.money(d.total_revenue)],
@@ -782,7 +793,7 @@
 
   /* ================= static i18n + language switch ================= */
 
-  const APP_VERSION = "2.1";
+  const APP_VERSION = "2.2";
   function updateVersion() {
     document.getElementById("app-version").textContent =
       (lang === "pt" ? "Painel v" : "Dashboard v") + APP_VERSION +
