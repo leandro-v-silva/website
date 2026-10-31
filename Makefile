@@ -1,4 +1,5 @@
 PY := .venv/bin/python
+PORT ?= 8000
 
 .PHONY: all setup data etl export report clean
 
@@ -18,7 +19,7 @@ export:
 	$(PY) etl/export.py
 
 report:
-	$(PY) -m http.server 8000 --directory report
+	$(PY) -m http.server $(PORT) --directory report
 
 clean:
 	rm -f analytics.duckdb report/data.js
